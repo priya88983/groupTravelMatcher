@@ -127,23 +127,49 @@ export function listGroups(filters = {}) {
   return { groups: rows.map(decorateGroup), total };
 }
 
+
 export function getGroup(groupId, userId = null) {
   const group = groupRepo.findById(groupId);
+
   if (!group) {
     throw notFound('GROUP_NOT_FOUND', 'Group not found.');
   }
-  const members = groupRepo.listMembers(groupId);
-  const traveller = userId ? travellerRepo.findByUserId(userId) : null;
 
-  let viewerRole = null; // OWNER | MEMBER | REQUESTER | OTHER
+  // Fetch group members
+  const members = groupRepo.listMembers(groupId);
+
+  // Fetch complete owner profile
+  const owner = travellerRepo.findById(group.owner_id);
+
+  if (!owner) {
+    throw notFound('OWNER_NOT_FOUND', 'Group owner not found.');
+  }
+
+  const ownerInterests = travellerRepo.findInterests(
+    owner.traveller_id
+  );
+
+  // Fetch currently logged-in traveller
+  const traveller = userId
+    ? travellerRepo.findByUserId(userId)
+    : null;
+
+  let viewerRole = null;
   let requesterStatus = null;
+
   if (traveller) {
-    if (traveller.traveller_id === group.owner_id) {
+    const travellerId = traveller.traveller_id;
+
+    if (travellerId === group.owner_id) {
       viewerRole = 'OWNER';
-    } else if (groupRepo.findMember(groupId, traveller.traveller_id)) {
+    } else if (groupRepo.findMember(groupId, travellerId)) {
       viewerRole = 'MEMBER';
     } else {
-      const request = requestRepo.findByGroupAndTraveller(groupId, traveller.traveller_id);
+      const request = requestRepo.findByGroupAndTraveller(
+        groupId,
+        travellerId
+      );
+
       if (request) {
         viewerRole = 'REQUESTER';
         requesterStatus = request.status;
@@ -155,16 +181,24 @@ export function getGroup(groupId, userId = null) {
 
   return {
     ...decorateGroup(group),
+
     owner: {
-      traveller_id: group.owner_id,
-      name: group.owner_name,
-      interests: travellerRepo.findInterests(group.owner_id),
+      traveller_id: owner.traveller_id,
+      name: owner.name,
+      age: owner.age,
+      gender: owner.gender,
+      home_city: owner.home_city,
+      gender_preference: owner.gender_preference,
+      interests: ownerInterests,
     },
+
     members,
+
     viewer_role: viewerRole,
     requester_status: requesterStatus,
   };
 }
+
 
 export function searchGroups(userId, searchInput) {
   const traveller = travellerRepo.findByUserId(userId);
