@@ -55,6 +55,20 @@ const SCHEMA = [
     role TEXT NOT NULL DEFAULT 'member',
     UNIQUE (group_id, traveller_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS join_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id TEXT NOT NULL REFERENCES groups(group_id) ON DELETE CASCADE,
+    traveller_id TEXT NOT NULL REFERENCES travellers(traveller_id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    destination TEXT,
+    check_in TEXT,
+    check_out TEXT,
+    budget_inr INTEGER,
+    interests TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (group_id, traveller_id)
+  )`,
 ];
 
 const INDEXES = [
@@ -63,6 +77,8 @@ const INDEXES = [
   'CREATE INDEX IF NOT EXISTS idx_refresh_user ON refresh_sessions(user_id)',
   'CREATE INDEX IF NOT EXISTS idx_refresh_family ON refresh_sessions(family_id)',
   'CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id)',
+  'CREATE INDEX IF NOT EXISTS idx_join_requests_group ON join_requests(group_id)',
+  'CREATE INDEX IF NOT EXISTS idx_join_requests_traveller ON join_requests(traveller_id)',
 ];
 
 export function migrate() {

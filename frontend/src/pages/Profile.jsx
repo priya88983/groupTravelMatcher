@@ -14,10 +14,35 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [myPosts, setMyPosts] = useState([]);
+  const [requests, setRequests] = useState({ received: [], sent: [] });
+  const [profileError, setProfileError] = useState('');
+  const [deciding, setDeciding] = useState(false);
 
   useEffect(() => {
-    api.interests().then((data) => setInterests(data.interests)).catch(() => {});
+    api.interests().then((data) => setInterests(data.interests)).catch(() => { });
   }, []);
+
+  useEffect(() => {
+    api.getMyGroups()
+      .then((data) => setMyPosts(data.groups.filter((g) => g.role === 'CREATOR')))
+      .catch(() => { });
+    api.getProfileRequests().then(setRequests).catch(() => { });
+  }, []);
+
+  async function decideRequestForProfile(id, action) {
+    setDeciding(true);
+    setProfileError('');
+    try {
+      await api.decideRequest(id, action);
+      const data = await api.getProfileRequests();
+      setRequests(data);
+    } catch (err) {
+      setProfileError(err.message);
+    } finally {
+      setDeciding(false);
+    }
+  }
 
   useEffect(() => {
     if (traveller && !form) {
@@ -95,6 +120,78 @@ export default function Profile() {
             </button>
             <Link to="/" className="button secondary">Back home</Link>
           </div>
+
+          <section className="profile-section">
+            <h2>My Posts</h2>
+            {myPosts.length === 0 ? (
+              <p className="hint">You have not created any group posts yet.</p>
+            ) : (
+              <div className="card-grid">
+                {myPosts.map((post) => (
+                  <div key={post.group_id} className="group-card card">
+                    <div className="group-card-top">
+                      <span className="badge">{post.city}</span>
+                      <span className="badge">{post.status}</span>
+                    </div>
+                    <h3 className="group-card-title">{post.name}</h3>
+                    <p className="group-card-meta">
+                      {post.check_in} → {post.check_out} · {post.member_count}/{post.max_size} members
+                    </p>
+                    <Link to={`/groups/${post.group_id}`} className="button primary">Open post</Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="profile-section">
+            <h2>Requests</h2>
+            {profileError && <div className="alert alert-error">{profileError}</div>}
+
+            <h3>Received</h3>
+            {requests.received.length === 0 ? (
+              <p className="hint">No requests received for your groups.</p>
+            ) : (
+              <ul className="request-list">
+                {requests.received.map((req) => (
+                  <li key={req.id} className="request-item">
+                    <div className="request-head">
+                      <strong>{req.name}</strong>
+                      <span className={`badge ${req.status === 'PENDING' ? 'badge-open' : 'badge-full'}`}>{req.status}</span>
+                    </div>
+                    <p className="group-card-meta">{req.group_name} · {req.city}</p>
+                    {req.status === 'PENDING' && (
+                      <div className="actions">
+                        <button type="button" className="primary" disabled={deciding} onClick={() => decideRequestForProfile(req.id, 'approve')}>
+                          Approve
+                        </button>
+                        <button type="button" className="button secondary" disabled={deciding} onClick={() => decideRequestForProfile(req.id, 'reject')}>
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h3>Sent</h3>
+            {requests.sent.length === 0 ? (
+              <p className="hint">You have not sent any join requests.</p>
+            ) : (
+              <ul className="request-list">
+                {requests.sent.map((req) => (
+                  <li key={req.id} className="request-item">
+                    <div className="request-head">
+                      <strong>{req.group_name}</strong>
+                      <span className={`badge ${req.status === 'PENDING' ? 'badge-open' : 'badge-full'}`}>{req.status}</span>
+                    </div>
+                    <Link to={`/groups/${req.group_id}`} className="text-button">View group</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       ) : (
         <form onSubmit={onSubmit} noValidate>

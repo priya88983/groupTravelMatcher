@@ -8,6 +8,7 @@ export default function RequireProfile({ children }) {
   if (status === 'loading') {
     return <div className="container status">Loading…</div>;
   }
+  
   if (status !== 'authenticated') {
     return <Navigate to="/login" replace />;
   }

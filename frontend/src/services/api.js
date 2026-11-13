@@ -53,13 +53,39 @@ async function request(path, { method = 'GET', body } = {}) {
   return data;
 }
 
+// A shared in-flight refresh promise. Multiple callers (e.g. React StrictMode's
+// double-mount) share ONE refresh request, so the refresh token is rotated only
+// once instead of twice (which would trip the server's reuse-detection and
+// revoke the whole session family).
+let refreshPromise = null;
+function refreshOnce() {
+  if (!refreshPromise) {
+    refreshPromise = request('/auth/refresh', { method: 'POST' }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 export const api = {
   signup: (body) => request('/auth/signup', { method: 'POST', body }),
   login: (body) => request('/auth/login', { method: 'POST', body }),
-  refresh: () => request('/auth/refresh', { method: 'POST' }),
+  refresh: refreshOnce,
   logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
   getMyProfile: () => request('/travellers/me'),
   putMyProfile: (body) => request('/travellers/me', { method: 'PUT', body }),
   interests: () => request('/meta/interests'),
+  createGroup: (body) => request('/groups', { method: 'POST', body }),
+  listGroups: (query) => {
+    const q = new URLSearchParams(query).toString();
+    return request(`/groups${q ? `?${q}` : ''}`);
+  },
+  getGroup: (groupId) => request(`/groups/${groupId}`),
+  searchGroups: (body) => request('/search', { method: 'POST', body }),
+  sendJoinRequest: (groupId, body) => request(`/groups/${groupId}/requests`, { method: 'POST', body }),
+  getGroupRequests: (groupId) => request(`/groups/${groupId}/requests`),
+  decideRequest: (requestId, action) => request(`/requests/${requestId}`, { method: 'PATCH', body: { action } }),
+  getMyGroups: () => request('/users/me/groups'),
+  getProfileRequests: () => request('/users/me/requests'),
 };

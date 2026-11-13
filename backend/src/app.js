@@ -6,6 +6,10 @@ import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import travellerRoutes from './routes/travellerRoutes.js';
 import metaRoutes from './routes/metaRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
+import requestRoutes from './routes/requestRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 app.use(
@@ -29,6 +33,10 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/travellers', travellerRoutes);
 app.use('/api/meta', metaRoutes);
+app.use('/api/groups', groupRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api', requestRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
 
