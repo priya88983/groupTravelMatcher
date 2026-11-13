@@ -1,25 +1,28 @@
-import { useEffect, useState } from 'react';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
+import RequireAuth from './components/RequireAuth.jsx';
+import RequireProfile from './components/RequireProfile.jsx';
+import RequireProfileSetup from './components/RequireProfileSetup.jsx';
+import PublicOnly from './components/PublicOnly.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
+import ProfileSetup from './pages/ProfileSetup.jsx';
+import Profile from './pages/Profile.jsx';
+import Home from './pages/Home.jsx';
 
 export default function App() {
-  const [status, setStatus] = useState('Checking backend…');
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/health`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Backend not ready');
-        return response.json();
-      })
-      .then((data) => setStatus(data.database === 'connected' ? 'API and SQLite connected' : 'Backend online; database unavailable'))
-      .catch(() => setStatus('Backend unavailable — run npm run dev from the root.'));
-  }, []);
   return (
-    <main className="container">
-      <span className="eyebrow">Initial setup</span>
-      <h1>Group Travel Matcher</h1>
-      <p>The foundation is ready for traveller profiles, trip posts and group matching.</p>
-      <div className="status">{status}</div>
-      <p className="hint">No authentication or trip features are included in this first commit.</p>
-    </main>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+          <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
+          <Route path="/setup-profile" element={<RequireProfileSetup><ProfileSetup /></RequireProfileSetup>} />
+          <Route path="/profile" element={<RequireProfile><Profile /></RequireProfile>} />
+          <Route path="/" element={<RequireProfile><Home /></RequireProfile>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -6,3 +6,57 @@ h1 { margin: 14px 0; font-size: clamp(30px, 5vw, 44px); }
 p { color: #586779; line-height: 1.6; }
 .status { padding: 14px 18px; border-radius: 10px; background: #edf4ff; color: #1e4b86; font-weight: 600; margin: 24px 0; }
 .hint { font-size: 14px; }
+
+/* Auth + profile forms */
+form { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
+input, select {
+  padding: 10px 12px;
+  border: 1px solid #d4dce8;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+  color: #18283d;
+}
+input:focus, select:focus { outline: 2px solid #2563eb33; border-color: #2563eb; }
+fieldset { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; }
+legend { font-weight: 700; font-size: 14px; padding: 0 6px; }
+
+.password-row { display: flex; gap: 8px; align-items: center; }
+.password-row input { flex: 1; }
+.text-button { background: none; border: none; color: #2563eb; cursor: pointer; font-weight: 600; }
+
+button.primary, .button {
+  display: inline-flex; justify-content: center; align-items: center;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+}
+button.primary:disabled { opacity: .6; cursor: default; }
+.button.secondary, button.button.secondary { background: #eef2f8; color: #1e4b86; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+.alert { padding: 12px 14px; border-radius: 10px; font-weight: 600; font-size: 14px; }
+.alert-error { background: #fee2e2; color: #b91c1c; }
+.alert-success { background: #dcfce7; color: #15803d; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 8px 12px; border: 1px solid #d4dce8; border-radius: 999px;
+  background: #fff; font-size: 13px; cursor: pointer; font-weight: 600;
+}
+.chip-active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+.profile-list { display: grid; gap: 10px; margin: 8px 0; }
+.profile-list div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #eef2f8; }
+.profile-list dt { color: #586779; font-weight: 600; }
+.profile-list dd { margin: 0; font-weight: 600; text-align: right; }
+.card { background: #f6f8fb; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+.card p { margin: 4px 0; }

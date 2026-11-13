@@ -1,10 +1,21 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { checkDatabaseConnection } from './config/database.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
+import travellerRoutes from './routes/travellerRoutes.js';
+import metaRoutes from './routes/metaRoutes.js';
 
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173' }));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  }),
+);
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {
   try {
@@ -15,9 +26,10 @@ app.get('/api/health', (_req, res) => {
   }
 });
 
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/travellers', travellerRoutes);
+app.use('/api/meta', metaRoutes);
+
+app.use(errorHandler);
 
 export default app;
