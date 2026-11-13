@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { TravelPreferencesProvider } from './context/TravelPreferencesContext.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import RequireProfile from './components/RequireProfile.jsx';
 import RequireProfileSetup from './components/RequireProfileSetup.jsx';
@@ -18,21 +19,23 @@ import MyGroupsPage from './pages/MyGroupsPage.jsx';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-          <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
-          <Route path="/setup-profile" element={<RequireProfileSetup><ProfileSetup /></RequireProfileSetup>} />
-          <Route path="/profile" element={<RequireProfile><Profile /></RequireProfile>} />
-          <Route path="/explore" element={<RequireProfile><ExploreGroupsPage /></RequireProfile>} />
-          <Route path="/create-group" element={<RequireProfile><CreateGroupPage /></RequireProfile>} />
-          <Route path="/search" element={<RequireProfile><SearchGroupsPage /></RequireProfile>} />
-          <Route path="/groups/:groupId" element={<RequireProfile><GroupDetailsPage /></RequireProfile>} />
-          <Route path="/my-groups" element={<RequireProfile><MyGroupsPage /></RequireProfile>} />
-          <Route path="/" element={<RequireProfile><Home /></RequireProfile>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <TravelPreferencesProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+            <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
+            <Route path="/setup-profile" element={<RequireProfileSetup><ProfileSetup /></RequireProfileSetup>} />
+            <Route path="/profile" element={<RequireProfile><Profile /></RequireProfile>} />
+            <Route path="/explore" element={<RequireProfile><ExploreGroupsPage /></RequireProfile>} />
+            <Route path="/create-group" element={<RequireProfile><CreateGroupPage /></RequireProfile>} />
+            <Route path="/search" element={<RequireProfile><SearchGroupsPage /></RequireProfile>} />
+            <Route path="/groups/:groupId" element={<RequireProfile><GroupDetailsPage /></RequireProfile>} />
+            <Route path="/my-groups" element={<RequireProfile><MyGroupsPage /></RequireProfile>} />
+            <Route path="/" element={<RequireProfile><Home /></RequireProfile>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </TravelPreferencesProvider>
     </AuthProvider>
   );
 }
