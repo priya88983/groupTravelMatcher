@@ -1,96 +1,101 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useReducer, useRef } from 'react';
 import { api, setAccessToken, clearAccessToken } from '../services/api.js';
+import { INITIAL_STATE, reducer } from './authReducer.js';
 
 const AuthContext = createContext(null);
 
+// Session state shape and reducer live in authReducer.js so they can be unit
+// tested without a DOM. See that module for the status/profileStatus contract.
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [traveller, setTraveller] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | authenticated | unauthenticated
+  const [session, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const mountedRef = useRef(true);
 
-  const applySession = useCallback((nextUser, nextTraveller) => {
-    console.log('[Auth] Applying session:', { nextUser, nextTraveller });
-
-    setUser(nextUser || null);
-    setTraveller(nextTraveller ?? null);
-    setStatus(nextUser ? 'authenticated' : 'unauthenticated');
-
-    console.log('[Auth] Session status:', nextUser ? 'authenticated' : 'unauthenticated');
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
-  // Silent session restore: try the refresh endpoint once on application load.
+  // ---------------------------------------------------------------------------
+  // Silent session restore. Runs once on application load. The session stays in
+  // 'loading' until BOTH the JWT refresh AND the profile hydration complete;
+  // only then do we publish the user + profile together. This means route
+  // guards never see an authenticated-but-profileless intermediate state.
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    console.log('[Auth] Initializing session restore...');
-
     let cancelled = false;
+
     (async () => {
       try {
-        console.log('[Auth] Calling refresh API...');
         const { accessToken, user: sessionUser } = await api.refresh();
-
-        console.log('[Auth] Refresh successful:', { sessionUser, hasAccessToken: !!accessToken });
-
         if (cancelled) return;
-
         setAccessToken(accessToken);
-        setUser(sessionUser);
-        setStatus('authenticated');
 
-        console.log('[Auth] Fetching user profile...');
+        let data;
         try {
-          const data = await api.me();
-          console.log('[Auth] User profile fetched:', data);
-
-          if (!cancelled) setTraveller(data.traveller ?? null);
+          data = await api.me();
         } catch (error) {
-          console.error('[Auth] Failed to fetch user profile:', error);
-          if (!cancelled) setTraveller(null);
+          if (cancelled) return;
+          if (error.status === 404) {
+            // Authenticated but no profile exists yet -> setup-profile is correct.
+            dispatch({
+              type: 'SESSION_SET',
+              user: sessionUser,
+              traveller: null,
+              profileStatus: 'missing',
+            });
+          } else {
+            // Real profile API failure (network/5xx). Keep the valid session but
+            // mark the profile as errored — do NOT claim a missing profile.
+            dispatch({
+              type: 'SESSION_SET',
+              user: sessionUser,
+              traveller: null,
+              profileStatus: 'error',
+            });
+          }
+          return;
         }
-      } catch (error) {
-        console.error('[Auth] Session restore failed:', error);
 
+        if (!cancelled) {
+          dispatch({
+            type: 'SESSION_SET',
+            user: sessionUser,
+            traveller: data?.traveller ?? null,
+            profileStatus: data?.traveller ? 'ready' : 'missing',
+          });
+        }
+      } catch {
         if (!cancelled) {
           clearAccessToken();
-          applySession(null, null);
-        }
-      } finally {
-        if (!cancelled) {
-          setStatus((current) => (current === 'loading' ? 'unauthenticated' : current));
-          console.log('[Auth] Session restore completed.');
+          dispatch({ type: 'UNAUTHENTICATED' });
         }
       }
     })();
 
     return () => {
-      console.log('[Auth] Cleanup: cancelling session restore.');
       cancelled = true;
     };
-  }, [applySession]);
+  }, []);
 
   const hydrate = useCallback(async () => {
-    console.log('[Auth] Hydrating user session...');
-
     const data = await api.me();
-
-    console.log('[Auth] Hydration successful:', data);
-
-    applySession(data.user, data.traveller);
+    dispatch({
+      type: 'SESSION_SET',
+      user: data.user,
+      traveller: data.traveller ?? null,
+      profileStatus: data.traveller ? 'ready' : 'missing',
+    });
     return data;
-  }, [applySession]);
+  }, []);
 
   const signup = useCallback(
     async (email, password) => {
-      console.log('[Auth] Signup initiated:', { email });
-
       const data = await api.signup({ email, password });
-
-      console.log('[Auth] Signup successful.');
-
       setAccessToken(data.accessToken);
       await hydrate();
-
-      console.log('[Auth] Signup session hydrated.');
-
       return data;
     },
     [hydrate],
@@ -98,55 +103,36 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (email, password) => {
-      console.log('[Auth] Login initiated:', { email });
-
       const data = await api.login({ email, password });
-
-      console.log('[Auth] Login successful.');
-
       setAccessToken(data.accessToken);
       await hydrate();
-
-      console.log('[Auth] Login session hydrated.');
-
       return data;
     },
     [hydrate],
   );
 
   const logout = useCallback(async () => {
-    console.log('[Auth] Logout initiated.');
-
     try {
       await api.logout();
-      console.log('[Auth] Logout API successful.');
-    } catch (error) {
-      console.error('[Auth] Logout API failed:', error);
+    } catch {
       /* ignore network errors on logout */
     }
-
     clearAccessToken();
-    applySession(null, null);
-
-    console.log('[Auth] User logged out successfully.');
-  }, [applySession]);
+    dispatch({ type: 'UNAUTHENTICATED' });
+  }, []);
 
   const saveProfile = useCallback(async (profile) => {
-    console.log('[Auth] Saving traveller profile:', profile);
-
     const data = await api.putMyProfile(profile);
-
-    console.log('[Auth] Profile saved successfully:', data.traveller);
-
-    setTraveller(data.traveller);
+    dispatch({ type: 'PROFILE_UPDATED', traveller: data.traveller });
     return data.traveller;
   }, []);
 
   const value = {
-    status,
-    user,
-    traveller,
-    hasProfile: !!traveller,
+    status: session.status,
+    user: session.user,
+    traveller: session.traveller,
+    profileStatus: session.profileStatus,
+    hasProfile: session.profileStatus === 'ready' && !!session.traveller,
     signup,
     login,
     logout,
@@ -154,18 +140,9 @@ export function AuthProvider({ children }) {
     hydrate,
   };
 
-  console.log('[Auth] Current context state:', {
-    status,
-    user,
-    traveller,
-    hasProfile: !!traveller,
-  });
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  console.log('[Auth] useAuth called:', context);
-  return context;
+  return useContext(AuthContext);
 }

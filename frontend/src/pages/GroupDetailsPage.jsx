@@ -6,6 +6,7 @@ import { api } from '../services/api.js';
 import { useInterestLabels, formatDate, formatInr, formatInterestList } from '../utils/interests.js';
 
 function genderAllows(pref, myGender, otherGender) {
+  console.log(pref, otherGender, myGender)
   if (pref === 'ANY') return true;
   if (pref === 'SAME_GENDER') return otherGender === myGender;
   if (pref === 'OPPOSITE_GENDER') return otherGender !== myGender;
@@ -37,6 +38,7 @@ function localEligibility(group, traveller) {
   const genderOk =
     genderAllows(traveller.gender_preference, traveller.gender, group.owner?.gender) &&
     genderAllows(group.owner?.gender_preference, group.owner?.gender, traveller.gender);
+
   if (!genderOk) {
     failed.push('GENDER_PREFERENCE_MISMATCH');
     explanations.push('Gender preferences are not mutually compatible');
