@@ -88,4 +88,15 @@ export const api = {
   decideRequest: (requestId, action) => request(`/requests/${requestId}`, { method: 'PATCH', body: { action } }),
   getMyGroups: () => request('/users/me/groups'),
   getProfileRequests: () => request('/users/me/requests'),
+  listHotelOptions: (groupId, query) => {
+    const q = new URLSearchParams(query).toString();
+    return request(`/groups/${groupId}/hotels${q ? `?${q}` : ''}`);
+  },
+  getHotelPlan: (groupId) => request(`/groups/${groupId}/hotel-plan`),
+  saveHotelSelection: (groupId, body) =>
+    request(`/groups/${groupId}/hotel-plan`, { method: 'POST', body }),
+  updateHotelSelection: (groupId, selectionId, body) =>
+    request(`/groups/${groupId}/hotel-plan/${selectionId}`, { method: 'PATCH', body }),
+  deleteHotelSelection: (groupId, selectionId) =>
+    request(`/groups/${groupId}/hotel-plan/${selectionId}`, { method: 'DELETE' }),
 };

@@ -57,7 +57,10 @@ export default function MyGroupsPage() {
                 <p className="group-card-meta">
                   Status: <strong>{group.status}</strong>
                 </p>
-                <Link to={`/groups/${group.group_id}`} className="button primary">Open details</Link>
+                <div className="actions">
+                  <Link to={`/groups/${group.group_id}`} className="button primary">Open details</Link>
+                  <Link to={`/groups/${group.group_id}/hotels`} className="button secondary">View Hotels</Link>
+                </div>
               </div>
             ))}
           </div>

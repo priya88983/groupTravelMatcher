@@ -18,11 +18,11 @@ export function createGroup(group) {
   `).run(group);
 }
 
-export function addMember(groupId, travellerId, role) {
+export function addMember(groupId, travellerId, role, checkIn = null, checkOut = null) {
   db.prepare(`
-    INSERT OR IGNORE INTO group_members (group_id, traveller_id, role)
-    VALUES (?, ?, ?)
-  `).run(groupId, travellerId, role);
+    INSERT OR IGNORE INTO group_members (group_id, traveller_id, role, check_in, check_out)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(groupId, travellerId, role, checkIn, checkOut);
 }
 
 export function countGroups() {
@@ -61,8 +61,8 @@ export function memberCount(groupId) {
 export function listMembers(groupId) {
   return db
     .prepare(`
-      SELECT gm.traveller_id, gm.role, t.name, t.age, t.gender, t.home_city,
-             t.gender_preference
+      SELECT gm.traveller_id, gm.role, gm.check_in, gm.check_out,
+             t.name, t.age, t.gender, t.home_city, t.gender_preference
       FROM group_members gm
       JOIN travellers t ON t.traveller_id = gm.traveller_id
       WHERE gm.group_id = ?
@@ -114,7 +114,7 @@ export function nextGroupId() {
 export function createGroupWithOwner(group, ownerId) {
   const tx = db.transaction(() => {
     createGroup(group);
-    addMember(group.group_id, ownerId, 'owner');
+    addMember(group.group_id, ownerId, 'owner', group.check_in, group.check_out);
   });
   tx();
   return findById(group.group_id);
