@@ -15,6 +15,7 @@ import CreateGroupPage from './pages/CreateGroupPage.jsx';
 import SearchGroupsPage from './pages/SearchGroupsPage.jsx';
 import GroupDetailsPage from './pages/GroupDetailsPage.jsx';
 import MyGroupsPage from './pages/MyGroupsPage.jsx';
+import HotelPlanningPage from './pages/HotelPlanningPage.jsx';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/create-group" element={<RequireProfile><CreateGroupPage /></RequireProfile>} />
             <Route path="/search" element={<RequireProfile><SearchGroupsPage /></RequireProfile>} />
             <Route path="/groups/:groupId" element={<RequireProfile><GroupDetailsPage /></RequireProfile>} />
+            <Route path="/groups/:groupId/hotels" element={<RequireProfile><HotelPlanningPage /></RequireProfile>} />
             <Route path="/my-groups" element={<RequireProfile><MyGroupsPage /></RequireProfile>} />
             <Route path="/" element={<RequireProfile><Home /></RequireProfile>} />
             <Route path="*" element={<Navigate to="/" replace />} />

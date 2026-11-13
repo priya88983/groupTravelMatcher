@@ -185,7 +185,13 @@ export function decideRequest(requestId, userId, action) {
       if (groupRepo.memberCount(group.group_id) >= Number(group.max_size)) {
         throw conflict('GROUP_FULL', 'This group is full; the request cannot be approved.');
       }
-      groupRepo.addMember(group.group_id, seeker.traveller_id, 'member');
+      groupRepo.addMember(
+        group.group_id,
+        seeker.traveller_id,
+        'member',
+        request.check_in || group.check_in,
+        request.check_out || group.check_out,
+      );
       requestRepo.updateStatus(requestId, REQUEST_STATUS.APPROVED);
     });
     tx();

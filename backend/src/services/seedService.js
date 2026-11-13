@@ -79,9 +79,9 @@ export function seedGroups() {
       itinerary: group.itinerary,
     });
 
-    groupRepo.addMember(group.group_id, group.owner_id, 'owner');
+    groupRepo.addMember(group.group_id, group.owner_id, 'owner', group.check_in, group.check_out);
     for (const memberId of group.member_ids) {
-      groupRepo.addMember(group.group_id, memberId, 'member');
+      groupRepo.addMember(group.group_id, memberId, 'member', group.check_in, group.check_out);
     }
   }
 

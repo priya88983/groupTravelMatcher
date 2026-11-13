@@ -53,7 +53,24 @@ const SCHEMA = [
     group_id TEXT NOT NULL REFERENCES groups(group_id) ON DELETE CASCADE,
     traveller_id TEXT NOT NULL REFERENCES travellers(traveller_id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'member',
+    check_in TEXT,
+    check_out TEXT,
     UNIQUE (group_id, traveller_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS hotel_selections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id TEXT NOT NULL REFERENCES groups(group_id) ON DELETE CASCADE,
+    hotel_id TEXT NOT NULL,
+    room_id TEXT NOT NULL,
+    check_in TEXT NOT NULL,
+    check_out TEXT NOT NULL,
+    rooms_count INTEGER NOT NULL DEFAULT 1,
+    price_per_night INTEGER NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'INR',
+    room_capacity INTEGER NOT NULL DEFAULT 2,
+    created_by TEXT NOT NULL REFERENCES travellers(traveller_id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE TABLE IF NOT EXISTS join_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,12 +96,23 @@ const INDEXES = [
   'CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id)',
   'CREATE INDEX IF NOT EXISTS idx_join_requests_group ON join_requests(group_id)',
   'CREATE INDEX IF NOT EXISTS idx_join_requests_traveller ON join_requests(traveller_id)',
+  'CREATE INDEX IF NOT EXISTS idx_hotel_selections_group ON hotel_selections(group_id)',
 ];
+
+// Idempotently add columns that may already exist in older databases.
+function ensureColumn(table, column, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+  }
+}
 
 export function migrate() {
   const runAll = db.transaction(() => {
     for (const sql of SCHEMA) db.exec(sql);
     for (const sql of INDEXES) db.exec(sql);
+    ensureColumn('group_members', 'check_in', 'check_in TEXT');
+    ensureColumn('group_members', 'check_out', 'check_out TEXT');
   });
   runAll();
 }

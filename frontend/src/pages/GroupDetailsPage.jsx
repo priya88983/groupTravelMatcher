@@ -214,6 +214,11 @@ export default function GroupDetailsPage() {
                 ) : (
                   <RequestList requests={requests} onDecide={onDecide} labels={labels} busy={busy} />
                 )}
+                <div className="actions">
+                  <Link to={`/groups/${group.group_id}/hotels`} className="button secondary">
+                    View Hotels
+                  </Link>
+                </div>
               </div>
             )}
 
@@ -221,6 +226,11 @@ export default function GroupDetailsPage() {
             {isMember && (
               <div className="card action-card">
                 <span className="badge badge-open">You are a member of this group</span>
+                <div className="actions">
+                  <Link to={`/groups/${group.group_id}/hotels`} className="button secondary">
+                    View Hotels
+                  </Link>
+                </div>
               </div>
             )}
 

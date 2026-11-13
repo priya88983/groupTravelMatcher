@@ -10,6 +10,7 @@ import groupRoutes from './routes/groupRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
 import requestRoutes from './routes/requestRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import hotelRoutes from './routes/hotelRoutes.js';
 
 const app = express();
 app.use(
@@ -33,6 +34,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/travellers', travellerRoutes);
 app.use('/api/meta', metaRoutes);
+app.use('/api/groups', hotelRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api', requestRoutes);
